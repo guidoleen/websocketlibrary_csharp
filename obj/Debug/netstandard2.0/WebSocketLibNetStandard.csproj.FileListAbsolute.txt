@@ -1,0 +1,8 @@
+D:\SourceTesting\WebSocketLibNetStandard\bin\Debug\netstandard2.0\WebSocketLibNetStandard.deps.json
+D:\SourceTesting\WebSocketLibNetStandard\bin\Debug\netstandard2.0\WebSocketLibNetStandard.dll
+D:\SourceTesting\WebSocketLibNetStandard\bin\Debug\netstandard2.0\WebSocketLibNetStandard.pdb
+D:\SourceTesting\WebSocketLibNetStandard\obj\Debug\netstandard2.0\WebSocketLibNetStandard.AssemblyInfoInputs.cache
+D:\SourceTesting\WebSocketLibNetStandard\obj\Debug\netstandard2.0\WebSocketLibNetStandard.AssemblyInfo.cs
+D:\SourceTesting\WebSocketLibNetStandard\obj\Debug\netstandard2.0\WebSocketLibNetStandard.dll
+D:\SourceTesting\WebSocketLibNetStandard\obj\Debug\netstandard2.0\WebSocketLibNetStandard.pdb
+D:\SourceTesting\WebSocketLibNetStandard\obj\Debug\netstandard2.0\WebSocketLibNetStandard.csprojAssemblyReference.cache

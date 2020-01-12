@@ -1,0 +1,10 @@
+{
+  "WebsocketConfig": {
+    "uri": "127.0.0.1",
+    "port": 3000,
+    "socketconkey": "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
+    "certificate": "certfile.pfx",
+    "certificatekey": "",
+    "bytebuffer": 1024
+  }
+}
