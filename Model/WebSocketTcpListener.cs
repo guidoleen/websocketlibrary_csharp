@@ -11,17 +11,32 @@ using WebSocketLibNetStandard.Model;
 using System.Net.Security;
 using System.Configuration;
 
-namespace WebSocketLibNetStandard.Models
+namespace WebSocketLibNetStandard.Model
 {
     public class WebSocketTcpListener : IWebSocketHandler
     {
         private static TcpListener _websocketListener;
         private static string _tcpaddress;
         private static int _port;
-        private static string _socketconnectionkey = ""; // Special code based on the RFC compliance
-        private static int BYTE_BUFFER = 1024;
-        private static string CERTIFICATE_FILENAME = "";
-        private static string CERTIFICATE_PWD = TextEncoderDecoder.Decode("");
+        private static string _socketconnectionkey; // Special code based on the RFC compliance
+        private static List<string> _clientoriginaccept;
+        private static List<string> _clientoriginscheme;
+        private static int _byte_buffer;
+        private static string _certificate_filename;
+        private static string _certificate_pwd;
+
+        public WebSocketTcpListener(WebSocketConfigForJsonConfig websocketConfig)
+        {
+            _tcpaddress = websocketConfig.WebSocketConfigForJson.TcpAddress;
+            _port = websocketConfig.WebSocketConfigForJson.Port;
+            _socketconnectionkey = websocketConfig.WebSocketConfigForJson.SocketConnectionKey;
+            _clientoriginaccept = websocketConfig.WebSocketConfigForJson.AcceptUriList;
+            _clientoriginscheme = websocketConfig.WebSocketConfigForJson.AcceptUriScheme;
+
+            _byte_buffer = websocketConfig.WebSocketConfigForJson.ByteBuffer;
+            _certificate_filename = websocketConfig.WebSocketConfigForJson.CertificateFileName;
+            _certificate_pwd = TextEncoderDecoder.Decode(websocketConfig.WebSocketConfigForJson.CertificatePwd);
+        }
 
         public WebSocketTcpListener(string tcpaddress, int port)
         {
@@ -77,11 +92,12 @@ namespace WebSocketLibNetStandard.Models
         async private void HandleClient(TcpClient client)
         {
             int requestCount = 0;
+            bool isAccepableClient = true;
 
             NetworkStream stream = default(NetworkStream);
             await Task.Run(() =>
             {
-                while (true)
+                while (true && isAccepableClient)
                 {
                     if (client.Client.Connected)
                     {
@@ -101,6 +117,8 @@ namespace WebSocketLibNetStandard.Models
                         catch (Exception ee)
                         {
                             Console.WriteLine(ee.ToString());
+                            client.Close();
+                            stream.Close();
                         }
                     }
                 }
@@ -112,7 +130,7 @@ namespace WebSocketLibNetStandard.Models
         {
             // Check if SslCertificate is value or not
             SslStream sslStream = new SslStream(client.GetStream());
-            sslStream.AuthenticateAsServer(WebSocketCertificate.CreateServerCertificate(CERTIFICATE_FILENAME, CERTIFICATE_PWD));
+            sslStream.AuthenticateAsServer(WebSocketCertificate.CreateServerCertificate(_certificate_filename, _certificate_pwd));
 
             // Read bytes from stream
             sslStream.Read(buffer, 0, client.Available);
@@ -120,6 +138,7 @@ namespace WebSocketLibNetStandard.Models
 
         private void CreateHandshakeAndReadWrite(byte[] buffer, NetworkStream stream)
         {
+            bool isAcceptableClient = false; // Checking for client origin
             var strInputFromClient = Encoding.UTF8.GetString(buffer);
 
             // HANDSHAKE >> Check if handshake necessary
@@ -129,7 +148,13 @@ namespace WebSocketLibNetStandard.Models
             // 4. Write the hash back as the value of "Sec-WebSocket-Accept" response header in an HTTP response
             if (Regex.IsMatch(strInputFromClient, "^GET", RegexOptions.IgnoreCase))
             {
+                // First check from Origin Header information if the client is authorized based on its original uri
+                string strClientOrigin = Regex.Match(strInputFromClient, "Origin: (.*)").Groups[1].Value.Trim();
+                isAcceptableClient = IsAcceptableClient(strClientOrigin);
+                if (!isAcceptableClient) return; // Stop the further handshake process
+
                 string strSecretClientKey = Regex.Match(strInputFromClient, "Sec-WebSocket-Key: (.*)").Groups[1].Value.Trim();
+
                 byte[] writeBytes = ResponseHeaderToBytes(strSecretClientKey + _socketconnectionkey);
 
                 // Write resonseheader back to the client as handshake
@@ -145,6 +170,26 @@ namespace WebSocketLibNetStandard.Models
                 // Text from client to server
                 Console.Write(ReadBytesFromClient(buffer));
             }
+        }
+
+        private bool IsAcceptableClient(string strclientorigin)
+        {
+            string regexOnConfig = "";
+            bool isAcceptableClient = false;
+
+            foreach(var configuri in _clientoriginaccept)
+            {
+                foreach(var configscheme in _clientoriginscheme)
+                {
+                    regexOnConfig = $"^{configscheme}://{configuri}";
+                    isAcceptableClient = Regex.Match(strclientorigin, regexOnConfig, RegexOptions.IgnoreCase).Success;
+                    if (isAcceptableClient)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return isAcceptableClient;
         }
 
         /// <summary>

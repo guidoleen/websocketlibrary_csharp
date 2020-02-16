@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WebSocketLibNetStandard.Models
+namespace WebSocketLibNetStandard.Model
 {
     public interface IWebSocketHandler
     {

@@ -2,19 +2,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using WebSocketLibNetStandard.Models;
+using WebSocketLibNetStandard.Model;
+using System.IO;
+using System.Reflection;
 
 namespace WebSocketLibNetStandard
 {
     public static class WebsocketService
     {
         public static IWebSocketHandler socketServer = null;
-        private static string _uri = "127.0.0.1";
-        private static int _port = 3000;
+        private static string _uri;
+        private static int _port;
 
         public static void CreateWebsocketHandler()
         {
-            socketServer = new WebSocketTcpListener(_uri, _port);
+            WebSocketConfigForJsonConfig websocketConfig = ConfigJson<WebSocketConfigForJsonConfig>.GetJsonFromConfigFile().Result;
+
+            socketServer = new WebSocketTcpListener(websocketConfig);
             socketServer.RunServer(); // Start the Listener
         }
     }
